@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FocusEvent } from "react";
+import { useState } from "react";
 import styled from "styled-components";
 import eyeInvisibleIcon from "../../../assets/images/icons/eye-invisible.svg";
 import eyeVisibleIcon from "../../../assets/images/icons/eye-visible.svg";
@@ -7,6 +7,7 @@ import {
   InputField,
   Label,
 } from "../../../components/UI/InputItem";
+import { UseFormRegisterReturn } from "react-hook-form";
 
 const InputWrapper = styled.div`
   position: relative;
@@ -22,20 +23,16 @@ const PasswordToggleButton = styled.button`
 interface PasswordInputProps {
   id: string;
   label: string;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onBlur: (event: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   placeholder: string;
+  register: UseFormRegisterReturn; // react-hook-form의 register 함수 사용
   errorMessage?: string;
 }
 
 const PasswordInput: React.FC<PasswordInputProps> = ({
   id,
   label,
-  value,
-  onChange,
-  onBlur,
   placeholder,
+  register,
   errorMessage,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -52,10 +49,8 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
         <InputField
           id={id}
           type={showPassword ? "text" : "password"}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
           placeholder={placeholder}
+          {...register}
         />
 
         <PasswordToggleButton

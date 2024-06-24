@@ -21,6 +21,7 @@ import Header from "./components/Layout/Header";
 import ItemPage from "./pages/ItemPage/ItemPage";
 import PolicyPage from "./pages/PolicyPage/PolicyPage";
 import FaqPage from "./pages/FaqPage/FaqPage";
+import MyPage from "./pages/MyPage/MyPage";
 
 // useLocation 훅을 사용하기 위해 router 컴포넌트를 분리했어요.
 const MainContent: React.FC = () => {
@@ -39,6 +40,7 @@ const MainContent: React.FC = () => {
           <Route index element={<HomePage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="signup" element={<SignupPage />} />
+          <Route path="my" element={<MyPage />} />
           <Route path="items" element={<MarketPage />} />
           <Route path="items/:productId" element={<ItemPage />} />
           <Route path="additem" element={<AddItemPage />} />

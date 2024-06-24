@@ -1,7 +1,8 @@
-import Logo from "../../assets/images/logo/logo.svg";
+import { ReactComponent as Logo } from "../../assets/images/logo/logo.svg";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { StyledLink } from "../../styles/CommonStyles";
+import { ReactComponent as DefaultProfileImage } from "../../assets/images/ui/ic_profile.svg";
 
 const GlobalHeader = styled.header`
   display: flex;
@@ -48,6 +49,8 @@ const NavItem = styled.li`
 
 const LoginLink = styled(StyledLink)``;
 
+const ProfileLink = styled(Link)``;
+
 function getLinkStyle({ isActive }: { isActive: boolean }) {
   return { color: isActive ? "var(--blue)" : undefined };
 }
@@ -55,11 +58,14 @@ function getLinkStyle({ isActive }: { isActive: boolean }) {
 const Header: React.FC = () => {
   const location = useLocation();
 
+  // localStorage에서 accessToken을 확인해 로그인 여부 판단
+  const isLoggedIn = localStorage.getItem("accessToken");
+
   return (
     <GlobalHeader>
       <HeaderLeft>
         <HeaderLogo to="/" aria-label="홈으로 이동">
-          <img src={Logo} alt="판다마켓 로고" width="153" />
+          <Logo />
         </HeaderLogo>
 
         <nav>
@@ -85,7 +91,13 @@ const Header: React.FC = () => {
         </nav>
       </HeaderLeft>
 
-      <LoginLink to="/login">로그인</LoginLink>
+      {isLoggedIn ? (
+        <ProfileLink to="/my" aria-label="마이페이지로 이동">
+          <DefaultProfileImage />
+        </ProfileLink>
+      ) : (
+        <LoginLink to="/login">로그인</LoginLink>
+      )}
     </GlobalHeader>
   );
 };

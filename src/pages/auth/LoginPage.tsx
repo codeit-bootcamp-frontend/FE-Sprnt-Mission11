@@ -1,4 +1,4 @@
-import { useState, ChangeEvent, FocusEvent, useEffect } from "react";
+import { useEffect } from "react";
 import {
   AuthContainer,
   LogoHomeLink,
@@ -7,74 +7,50 @@ import {
   SubmitButton,
 } from "./AuthStyles";
 import logo from "../../assets/images/logo/logo.svg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import InputItem from "../../components/UI/InputItem";
 import SocialLogin from "./components/SocialLogin";
-import { LoginInputId, getErrorMessage } from "./authUtils";
 import PasswordInput from "./components/PasswordInput";
-import useDebounce from "../../hooks/useDebounce";
-
-interface FormState {
-  email: string;
-  password: string;
-}
-
-interface ErrorState {
-  email?: string;
-  password?: string;
-}
+import { SubmitHandler, useForm } from "react-hook-form";
+import { LoginFormValues } from "../../types/authTypes";
+import { requestLogin } from "../../api/authApi";
 
 const LoginPage: React.FC = () => {
-  const [formState, setFormState] = useState<FormState>({
-    email: "",
-    password: "",
-  });
-  const [errors, setErrors] = useState<ErrorState>({});
+  // 답안 해설은 회원가입 페이지 컴포넌트를 참고해 주세요!
 
-  const debouncedPassword = useDebounce(formState.password, 500);
+  const navigate = useNavigate();
 
+  // 만약 로그인 컴포넌트 마운트 시 localStorage에 accessToken가 존재한다면 이미 로그인 상태라는 의미이므로 홈페이지로 리라우팅
   useEffect(() => {
-    if (debouncedPassword) {
-      const passwordError = getErrorMessage("password", debouncedPassword);
-
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        password: passwordError,
-      }));
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      navigate("/");
     }
-  }, [debouncedPassword]);
+  }, [navigate]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { id, value } = e.target;
-    setFormState((prevState) => ({ ...prevState, [id]: value }));
-    setErrors((prevErrors) => ({ ...prevErrors, [id]: "" }));
-  };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    trigger,
+    formState: { errors, isValid },
+  } = useForm<LoginFormValues>({ mode: "onChange" });
 
-  const handleBlur = (
-    e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { id, value } = e.target;
-    const errorMessage = getErrorMessage(id as LoginInputId, value);
-    setErrors((prevErrors) => ({ ...prevErrors, [id]: errorMessage }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // 안전 장치로 form 제출 전 validation 한 번 더 진행
-    const newErrors = {
-      email: getErrorMessage("email", formState.email),
-      password: getErrorMessage("password", formState.password),
+  const onSubmit: SubmitHandler<LoginFormValues> = async (data) => {
+    const trimmedData: LoginFormValues = {
+      email: data.email.trim(),
+      password: data.password.trim(),
     };
 
-    setErrors(newErrors);
-
-    const isValid = Object.values(newErrors).every((error) => !error);
-
-    if (isValid) {
-      // TODO: 로그인 API
+    try {
+      const result = await requestLogin(trimmedData);
+      console.log(result);
+      // 로그인 API 호출 후 응답 성공 시, localStorage에 accessToken 저장 후 홈페이지로 이동
+      localStorage.setItem("accessToken", result.accessToken);
+      navigate("/");
+    } catch (error) {
+      console.error("Error:", error);
+      alert("로그인 중 오류가 발생했습니다. 다시 시도해 주세요.");
     }
   };
 
@@ -84,28 +60,40 @@ const LoginPage: React.FC = () => {
         <img src={logo} alt="판다마켓 로고" />
       </LogoHomeLink>
 
-      <Form id="loginForm" method="post" onSubmit={handleSubmit}>
+      <Form id="loginForm" method="post" onSubmit={handleSubmit(onSubmit)}>
         <InputItem
           id="email"
           label="이메일"
-          value={formState.email}
-          onChange={handleChange}
-          onBlur={handleBlur}
           placeholder="이메일을 입력해 주세요"
-          errorMessage={errors.email}
+          register={register("email", {
+            required: "이메일을 입력해 주세요",
+            pattern: {
+              value: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/,
+              message: "잘못된 이메일 형식입니다",
+            },
+          })}
+          setValue={setValue}
+          trigger={trigger}
+          errorMessage={errors.email?.message}
         />
 
         <PasswordInput
           id="password"
           label="비밀번호"
-          value={formState.password}
-          onChange={handleChange}
-          onBlur={handleBlur}
           placeholder="비밀번호를 입력해 주세요"
-          errorMessage={errors.password}
+          register={register("password", {
+            required: "비밀번호를 입력해 주세요",
+            minLength: {
+              value: 8,
+              message: "비밀번호를 8자 이상 입력해 주세요",
+            },
+          })}
+          errorMessage={errors.password?.message}
         />
 
-        <SubmitButton type="submit">로그인</SubmitButton>
+        <SubmitButton type="submit" disabled={!isValid}>
+          로그인
+        </SubmitButton>
       </Form>
 
       <SocialLogin />
